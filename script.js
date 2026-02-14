@@ -2,10 +2,10 @@ let audioCtx, analyser, dataArray;
 let isPlaying = false;
 let lives = 5;
 let distance = 0;
-let gameSpeed = 5;
+let gameSpeed = 3; // 시작 속도를 5에서 3으로 하향 (매우 천천히 시작)
 let charY = 0;
 let velocityY = 0;
-const GRAVITY = 0.5; // 중력
+const GRAVITY = 0.4; // 중력을 낮춰서 점프가 더 부드럽게 보이게 함
 
 const charEl = document.getElementById('character');
 const distEl = document.getElementById('dist');
@@ -27,45 +27,46 @@ document.getElementById('start-btn').addEventListener('click', async () => {
         gameLoop();
         spawnController();
         
-        // 20초마다 속도 증가
+        // 20초마다 속도 조금씩 증가 (+0.8씩)
         setInterval(() => {
             if (!isPlaying) return;
-            gameSpeed += 1.2;
+            gameSpeed += 0.8; 
             showSpeedMsg();
         }, 20000);
         
     } catch (err) {
-        alert("마이크 권한이 필요합니다!");
+        alert("마이크 권한을 허용해주세요!");
     }
 });
 
 function gameLoop() {
     if (!isPlaying) return;
-
-    analyzeOctave();
+    analyzeVoice();
     applyPhysics();
     moveEntities();
     updateUI();
-    
     requestAnimationFrame(gameLoop);
 }
 
-function analyzeOctave() {
+function analyzeVoice() {
     analyser.getFloatTimeDomainData(dataArray);
     let pitchData = autoCorrelate(dataArray, audioCtx.sampleRate);
     
-    if (pitchData.freq > 0 && pitchData.confidence > 0.9) {
+    // 점프 안됨 해결: 신뢰도 기준을 0.85로 낮추고 감도 상향
+    if (pitchData.freq > 0 && pitchData.confidence > 0.85) {
         let freq = pitchData.freq;
-        // C4(261.63Hz) 기준 옥타브 계산 (-2 ~ 3 옥타브 정도 범위)
         let octave = Math.log2(freq / 261.63);
         
-        // 낮은 음은 약하게, 높은 음은 강하게 점프
-        // 옥타브가 높을수록 점프 힘이 배가됨
-        let jumpPower = 10 + (octave * 4); 
-        jumpPower = Math.max(5, Math.min(22, jumpPower)); // 최소/최대 제한
-
-        if (charY <= 10) velocityY = jumpPower; 
-        statusMsg.innerText = `PITCH: ${Math.round(freq)}Hz (Octave: ${octave.toFixed(1)})`;
+        // 바닥에 있거나 아주 낮은 높이일 때만 점프 가능
+        if (charY < 5) {
+            let jumpPower = 12 + (octave * 3); 
+            velocityY = Math.max(8, Math.min(18, jumpPower));
+            
+            // 점프 시 걷기 애니메이션 중지
+            charEl.classList.remove('walk');
+            charEl.classList.add('jumping');
+        }
+        statusMsg.innerText = `점프 발생! (${Math.round(freq)}Hz)`;
     }
 }
 
@@ -76,22 +77,23 @@ function applyPhysics() {
     } else {
         charY = 0;
         velocityY = 0;
+        // 바닥에 닿으면 다시 걷기 애니메이션 시작
+        if (isPlaying) {
+            charEl.classList.add('walk');
+            charEl.classList.remove('jumping');
+        }
     }
     charEl.style.bottom = (50 + charY) + "px";
 }
 
-// 장애물 및 아이템 생성 관리
 function spawnController() {
     if (!isPlaying) return;
-    
     const rand = Math.random();
-    if (rand < 0.7) {
-        spawnEntity('obstacle'); // 장애물 확률 높음
-    } else {
-        spawnEntity('energy'); // 에너지 아이템 확률
-    }
+    if (rand < 0.7) spawnEntity('obstacle');
+    else spawnEntity('energy');
     
-    let nextSpawn = Math.random() * 1500 + (1500 / (gameSpeed/5));
+    // 속도에 맞춰 생성 간격 조절
+    let nextSpawn = Math.random() * 2000 + (2500 / (gameSpeed/3));
     setTimeout(spawnController, nextSpawn);
 }
 
@@ -100,8 +102,7 @@ function spawnEntity(type) {
     entity.className = type;
     if (type === 'energy') {
         entity.innerHTML = '⚡';
-        // 에너지 아이템은 공중에 생성
-        entity.style.bottom = (100 + Math.random() * 200) + 'px';
+        entity.style.bottom = (120 + Math.random() * 150) + 'px';
     }
     entity.style.right = '-100px';
     document.getElementById('world').appendChild(entity);
@@ -117,21 +118,16 @@ function moveEntities() {
         const charRect = charEl.getBoundingClientRect();
         const enRect = en.getBoundingClientRect();
 
-        // 충돌 검사 (살짝 여유를 줌)
         if (
-            charRect.left < enRect.right - 10 &&
-            charRect.right > enRect.left + 10 &&
-            charRect.bottom > enRect.top + 10 &&
-            charRect.top < enRect.bottom - 10
+            charRect.left < enRect.right - 15 &&
+            charRect.right > enRect.left + 15 &&
+            charRect.bottom > enRect.top + 15 &&
+            charRect.top < enRect.bottom - 15
         ) {
-            if (en.classList.contains('obstacle')) {
-                hit();
-            } else {
-                heal();
-            }
+            if (en.classList.contains('obstacle')) hit();
+            else heal();
             en.remove();
         }
-
         if (right > window.innerWidth + 100) en.remove();
     });
 }
@@ -139,36 +135,27 @@ function moveEntities() {
 function hit() {
     lives--;
     updateUI();
-    charEl.style.filter = "invert(1)";
-    setTimeout(() => charEl.style.filter = "none", 200);
+    charEl.style.filter = "brightness(5) saturate(0)";
+    setTimeout(() => charEl.style.filter = "none", 300);
     if (lives <= 0) gameOver();
 }
 
 function heal() {
     if (lives < 5) {
         lives++;
-        statusMsg.innerText = "ENERGY RECOVERED! ⚡";
         updateUI();
     }
 }
 
 function updateUI() {
-    distance += gameSpeed / 20;
+    distance += gameSpeed / 30;
     distEl.innerText = Math.floor(distance);
     livesEl.innerText = "❤️".repeat(lives);
 
-    // 거리(점수)에 따른 실시간 변신
     let d = Math.floor(distance);
-    if (d < 50) {
-        charEl.innerText = "🐥";
-    } else if (d < 150) {
-        charEl.innerText = "🐔";
-        charEl.style.fontSize = "70px";
-    } else {
-        charEl.innerText = "🐉";
-        charEl.style.fontSize = "100px";
-        charEl.style.filter = "drop-shadow(0 0 10px #00f3ff)";
-    }
+    if (d < 50) charEl.innerText = "🐥";
+    else if (d < 150) { charEl.innerText = "🐔"; charEl.style.fontSize = "70px"; }
+    else { charEl.innerText = "🐉"; charEl.style.fontSize = "100px"; }
 }
 
 function showSpeedMsg() {
@@ -179,15 +166,17 @@ function showSpeedMsg() {
 
 function gameOver() {
     isPlaying = false;
+    charEl.classList.remove('walk');
     document.getElementById('game-over').classList.remove('hidden');
     document.getElementById('final-dist').innerText = Math.floor(distance);
 }
 
+// 오디오 분석 알고리즘
 function autoCorrelate(buffer, sampleRate) {
     let size = buffer.length, rms = 0;
     for (let i = 0; i < size; i++) rms += buffer[i] * buffer[i];
     rms = Math.sqrt(rms / size);
-    if (rms < 0.01) return { freq: -1, confidence: 0 };
+    if (rms < 0.008) return { freq: -1, confidence: 0 }; // rms 기준을 낮춰 더 작은 소리도 감지
 
     let c = new Array(size).fill(0);
     for (let i = 0; i < size; i++)
