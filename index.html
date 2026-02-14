@@ -1,13 +1,17 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice Ocean Survival: 3 Lives</title>
+    <title>Voice Ocean Survival</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
+        <div id="countdown-overlay" class="hidden">
+            <div id="countdown-number"></div>
+        </div>
+
         <div id="ui">
             <div id="status-left">
                 <div id="score-container">
@@ -18,7 +22,7 @@
             </div>
             
             <div id="control-panel">
-                <div class="label">입력 레벨 (감도 0.8 고정)</div>
+                <div class="label">VOICE INPUT LEVEL</div>
                 <div id="vol-meter">
                     <div id="vol-bar"></div>
                 </div>
@@ -26,8 +30,7 @@
         </div>
 
         <div id="world">
-            <div id="start-bridge"></div>
-            <div id="character" class="walk-anim">🐥</div>
+            <div id="character" class="float-anim">🐥</div>
             <div class="ocean">
                 <div class="wave wave1"></div>
                 <div class="wave wave2"></div>
@@ -35,17 +38,17 @@
         </div>
 
         <div id="overlay" class="modal">
-            <h1>OCEAN SURVIVAL</h1>
-            <p>목소리를 내어 비행하세요!</p>
-            <button id="start-btn">START</button>
-            <p class="small">2초 후 중력이 작동합니다. 바닥은 즉사!</p>
+            <h1>VOICE SURVIVAL</h1>
+            <p>Make sound to fly and stay above the ocean!</p>
+            <button id="start-btn">START MISSION</button>
+            <p class="small-hint">Sensitivity is fixed at 0.8 for fair play.</p>
         </div>
 
         <div id="game-over" class="modal hidden">
             <h1 class="danger">GAME OVER</h1>
-            <p id="death-reason">바다에 빠졌습니다!</p>
-            <div class="final-score">최종 점수: <span id="final-score-val">0</span>m</div>
-            <button onclick="location.reload()">RETRY</button>
+            <p id="death-reason">You fell into the ocean!</p>
+            <div class="final-score">TOTAL DISTANCE: <span id="final-score-val">0</span>m</div>
+            <button onclick="location.reload()">TRY AGAIN</button>
         </div>
     </div>
     <script src="script.js"></script>

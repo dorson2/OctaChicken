@@ -1,47 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nanum+Square+Round:wght@400;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Montserrat:wght@400;900&display=swap');
 
 :root {
     --primary: #ffeb3b;
     --danger: #ff5252;
-    --sky: #2193b0;
+    --sky-top: #2193b0;
+    --sky-bottom: #6dd5ed;
     --ocean-blue: #0077be;
 }
 
-body { margin: 0; overflow: hidden; background: #000; font-family: 'Nanum Square Round', sans-serif; }
-#game-container { width: 100vw; height: 100vh; background: linear-gradient(to bottom, var(--sky), #6dd5ed); position: relative; }
+body { margin: 0; overflow: hidden; background: #000; font-family: 'Montserrat', sans-serif; }
+#game-container { width: 100vw; height: 100vh; background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom)); position: relative; }
 
-/* 상단 UI */
-#ui { position: absolute; top: 0; width: 100%; padding: 20px; display: flex; justify-content: space-between; z-index: 1000; box-sizing: border-box; pointer-events: none; }
-#score-container { background: rgba(0,0,0,0.6); padding: 5px 20px; border-radius: 20px; border: 3px solid var(--primary); color: white; text-align: center; }
-#distance-val { font-family: 'Black Han Sans'; font-size: 2rem; color: var(--primary); }
+/* COUNTDOWN ANIMATION */
+#countdown-overlay {
+    position: fixed; inset: 0; z-index: 3000;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.1); pointer-events: none;
+}
+#countdown-number {
+    font-family: 'Black Han Sans'; font-size: 12rem; color: var(--primary);
+    text-shadow: 10px 10px 0px #e64a19; transform: scale(0);
+}
+.pop-effect { animation: pop 1s ease-out; }
+@keyframes pop {
+    0% { transform: scale(0.5); opacity: 0; }
+    20% { transform: scale(1.1); opacity: 1; }
+    80% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.4); opacity: 0; }
+}
 
-#lives-container { font-size: 24px; margin-top: 10px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5)); }
+/* TOP UI */
+#ui { position: absolute; top: 0; width: 100%; padding: 25px; display: flex; justify-content: space-between; z-index: 1000; box-sizing: border-box; pointer-events: none; }
+#score-container { background: rgba(0,0,0,0.7); padding: 8px 25px; border-radius: 15px; border: 2px solid var(--primary); color: white; text-align: center; }
+.label { font-weight: 900; font-size: 14px; letter-spacing: 1px; margin-bottom: 2px; }
+#distance-val { font-family: 'Black Han Sans'; font-size: 2.2rem; color: var(--primary); line-height: 1; }
+#lives-container { font-size: 26px; margin-top: 12px; }
 
-#control-panel { background: rgba(255,255,255,0.9); padding: 12px; border-radius: 15px; min-width: 150px; }
-.label { font-size: 11px; font-weight: 800; color: #333; margin-bottom: 4px; }
-#vol-meter { width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+#control-panel { background: rgba(255,255,255,0.9); padding: 15px; border-radius: 12px; min-width: 180px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+#vol-meter { width: 100%; height: 10px; background: #ddd; border-radius: 5px; overflow: hidden; margin-top: 5px; }
 #vol-bar { width: 0%; height: 100%; background: #4caf50; transition: width 0.05s linear; }
 
-/* 캐릭터 및 환경 */
-#character { position: absolute; left: 100px; bottom: 50%; width: 80px; height: 80px; font-size: 60px; z-index: 500; transition: filter 0.2s; }
-.walk-anim { animation: walk 0.4s infinite alternate; }
-.hit-flash { filter: brightness(3) !important; } /* 데미지 입었을 때 반짝임 */
-
-@keyframes walk { from { transform: rotate(-10deg); } to { transform: rotate(10deg); } }
-
-#start-bridge { 
-    position: absolute; left: 0; bottom: calc(50% - 10px); width: 450px; height: 25px; 
-    background: #8B4513; border-bottom: 8px solid #5D2E0A; z-index: 450;
-    transition: transform 1.2s cubic-bezier(0.6, -0.28, 0.735, 0.045);
-}
+/* CHARACTER & OCEAN */
+#character { position: absolute; left: 100px; bottom: 50%; width: 80px; height: 80px; font-size: 60px; z-index: 500; }
+.float-anim { animation: float 1.5s infinite alternate ease-in-out; }
+@keyframes float { from { transform: translateY(0px); } to { transform: translateY(-25px); } }
+.hit-flash { filter: brightness(4) !important; transition: 0.1s; }
 
 .ocean { position: absolute; bottom: 0; width: 100%; height: 100px; background: var(--ocean-blue); z-index: 400; }
 .wave { position: absolute; top: -25px; width: 200%; height: 40px; background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M0,0V46.29c41.89-11.13,114.33-1.29,178.6,10.15,66,11.77,133.09,10.74,142.79,0,58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0Z" fill="white" opacity="0.3"></path></svg>'); animation: waveMove 4s infinite linear; }
 .wave2 { top: -35px; opacity: 0.5; animation-duration: 6s; animation-direction: reverse; }
-
 @keyframes waveMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+/* MODALS */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; color: white; text-align: center; }
 .hidden { display: none !important; }
-h1 { font-family: 'Black Han Sans'; font-size: 4rem; color: var(--primary); text-shadow: 4px 4px 0px #e64a19; margin: 0; }
-button { margin-top: 30px; padding: 15px 60px; font-size: 1.5rem; font-family: 'Black Han Sans'; background: var(--primary); border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 8px #fbc02d; }
+h1 { font-family: 'Black Han Sans'; font-size: 5rem; color: var(--primary); text-shadow: 6px 6px 0px #e64a19; margin: 0; }
+h1.danger { color: var(--danger); text-shadow: 6px 6px 0px #880e4f; }
+.final-score { font-size: 1.5rem; margin: 20px 0; }
+button { margin-top: 30px; padding: 18px 70px; font-size: 1.8rem; font-family: 'Black Han Sans'; background: var(--primary); border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 8px #fbc02d; transition: 0.1s; }
+button:hover { transform: scale(1.05); }
+button:active { transform: translateY(4px); box-shadow: 0 2px #fbc02d; }
+.small-hint { margin-top: 15px; opacity: 0.6; font-size: 0.9rem; }
