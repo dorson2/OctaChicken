@@ -1,42 +1,57 @@
-let audioCtx, analyser, dataArray;
+let audioCtx, analyser, dataArray, gainNode;
 let isPlaying = false;
 let score = 0;
-let gameSpeed = 2.5;
-let charY = window.innerHeight / 2 - 100; // 화면 중앙
+let charY = window.innerHeight / 2 - 100;
 let velocityY = 0;
-let isGravityActive = false; // 2초간 중력 무시
+let isGravityActive = false;
 
-// --- [물리 및 볼륨 설정] ---
-const GRAVITY = 0.15;        // 떨어지는 속도 (낮을수록 천천히 하강)
-const ASCENT_SPEED = 0.35;   // 소리 낼 때 떠오르는 속도 (부드럽게 상승)
-const MAX_VELOCITY = 4.5;    // 최대 속도 제한 (안정적인 비행)
-const VOLUME_THRESHOLD = 0.008; // 감도 (낮을수록 작은 소리에도 반응)
-// --------------------------
+// 게임 설정
+let userSensitivity = 1.5;
+const GRAVITY = 0.18;
+const ASCENT_SPEED = 0.45;
+const MAX_VELOCITY = 5.5;
 
 const charEl = document.getElementById('character');
 const bridgeEl = document.getElementById('start-bridge');
-const pitchBar = document.getElementById('pitch-bar');
+const volBar = document.getElementById('vol-bar');
+const scoreVal = document.getElementById('distance-val');
+const sensSlider = document.getElementById('sens-slider');
+const sensDisplay = document.getElementById('sens-display');
 
-document.getElementById('start-btn').addEventListener('click', async () => {
+// 감도 조절 이벤트
+sensSlider.addEventListener('input', (e) => {
+    userSensitivity = parseFloat(e.target.value);
+    sensDisplay.innerText = userSensitivity.toFixed(1);
+});
+
+document.getElementById('start-btn').addEventListener('click', startExperience);
+
+async function startExperience() {
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // 
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+        });
+        
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        await audioCtx.resume();
-
         const source = audioCtx.createMediaStreamSource(stream);
+        
+        // 마이크 신호 증폭 노드 (Gain Node)
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = 2.0; // 기본 2배 증폭
+        
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 512;
-        dataArray = new Float32Array(analyser.frequencyBinCount);
+        analyser.fftSize = 256;
+        
+        source.connect(gainNode);
+        gainNode.connect(analyser);
+        
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
 
         document.getElementById('overlay').classList.add('hidden');
         isPlaying = true;
-        
-        // 초기 고정 상태
-        charY = window.innerHeight / 2 - 100;
-        velocityY = 0;
-        isGravityActive = false;
 
-        // [2초 유예 로직] 2초간 공중부양 후 중력 작동 및 흙길 제거
+        // 2초 유예 로직
         setTimeout(() => {
             isGravityActive = true;
             if(bridgeEl) bridgeEl.style.transform = "translateX(-120%)";
@@ -45,29 +60,33 @@ document.getElementById('start-btn').addEventListener('click', async () => {
         gameLoop();
         spawnObstacles();
     } catch (err) {
-        alert("마이크 권한이 필요합니다! 브라우저 설정을 확인해주세요.");
+        alert("마이크를 찾을 수 없거나 권한이 거부되었습니다. 주소창의 자물쇠 아이콘을 확인해주세요!");
     }
-});
+}
 
 function gameLoop() {
     if (!isPlaying) return;
-    
-    // 볼륨(RMS) 분석
-    analyser.getFloatTimeDomainData(dataArray);
-    let rms = 0;
-    for (let i = 0; i < dataArray.length; i++) rms += dataArray[i] * dataArray[i];
-    rms = Math.sqrt(rms / dataArray.length);
 
-    // 볼륨 게이지 시각화
-    pitchBar.style.width = Math.min(100, rms * 800) + "%";
+    // 실시간 볼륨 분석
+    analyser.getByteTimeDomainData(dataArray);
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        let v = (dataArray[i] - 128) / 128;
+        sum += v * v;
+    }
+    let rms = Math.sqrt(sum / dataArray.length);
 
-    // 물리 시스템 적용
+    // 사용자의 감도 설정 적용
+    let adjustedVol = rms * userSensitivity;
+    volBar.style.width = Math.min(100, adjustedVol * 800) + "%";
+
     if (isGravityActive) {
-        if (rms > VOLUME_THRESHOLD) {
-            velocityY += ASCENT_SPEED; // 소리가 나면 추진력 발생
-            charEl.classList.remove('run'); 
+        // 소리가 나면 상승, 아니면 하강
+        if (adjustedVol > 0.01) {
+            velocityY += ASCENT_SPEED;
+            charEl.classList.remove('walk-anim');
         } else {
-            velocityY -= GRAVITY; // 무음이면 중력 적용
+            velocityY -= GRAVITY;
         }
 
         // 속도 제한
@@ -76,19 +95,15 @@ function gameLoop() {
 
         charY += velocityY;
 
-        // 바닥(바다) 즉사 판정
-        const seaLevel = 80; 
-        if (charY <= seaLevel) {
-            charY = seaLevel;
+        // 사망 판정 (바다 수면 높이 약 100px)
+        if (charY <= 100) {
+            charY = 100;
             gameOver("바다에 빠졌습니다! 🌊");
         }
-    } else {
-        // 첫 2초간은 그 자리에서 걷기만 함 (공중부양)
-        charEl.classList.add('run');
     }
 
     // 천장 제한
-    const maxHeight = window.innerHeight - 150;
+    const maxHeight = window.innerHeight - 100;
     if (charY >= maxHeight) {
         charY = maxHeight;
         velocityY = 0;
@@ -96,49 +111,53 @@ function gameLoop() {
 
     charEl.style.bottom = charY + "px";
     
-    if(isGravityActive) score += 0.15;
-    document.getElementById('jelly-count').innerText = Math.floor(score);
+    if(isGravityActive) {
+        score += 0.2;
+        scoreVal.innerText = Math.floor(score);
+    }
 
     requestAnimationFrame(gameLoop);
 }
 
-// 장애물 생성
 function spawnObstacles() {
-    if (!isPlaying) return;
-    if (!isGravityActive) { 
-        setTimeout(spawnObstacles, 500);
+    if (!isPlaying || !isGravityActive) {
+        setTimeout(spawnObstacles, 1000);
         return;
     }
-    
+
     const obs = document.createElement('div');
-    obs.style.position = "absolute";
-    obs.style.right = "-60px";
-    obs.style.bottom = (150 + Math.random() * (window.innerHeight - 350)) + "px";
-    obs.style.fontSize = "50px";
-    obs.innerText = "🦅"; 
+    obs.style.cssText = `position:absolute; right:-100px; bottom:${150 + Math.random() * (window.innerHeight - 300)}px; font-size:50px; z-index:600;`;
+    obs.innerText = Math.random() > 0.5 ? "🦅" : "🛸";
     document.getElementById('game-container').appendChild(obs);
 
-    const moveObs = setInterval(() => {
-        if (!isPlaying) { clearInterval(moveObs); return; }
-        let right = parseFloat(obs.style.right || -60);
-        right += gameSpeed;
-        obs.style.right = right + "px";
+    let pos = -100;
+    const moveInterval = setInterval(() => {
+        if(!isPlaying) { clearInterval(moveInterval); return; }
+        pos += (gameSpeed = 4 + score/500); // 갈수록 조금씩 빨라짐
+        obs.style.right = pos + "px";
 
-        const cRect = charEl.getBoundingClientRect();
-        const oRect = obs.getBoundingClientRect();
-        if (cRect.left < oRect.right - 15 && cRect.right > oRect.left + 15 &&
-            cRect.bottom > oRect.top + 15 && cRect.top < oRect.bottom - 15) {
-            gameOver("독수리와 충돌했습니다! 💥");
+        const c = charEl.getBoundingClientRect();
+        const o = obs.getBoundingClientRect();
+        
+        // 히트박스 판정
+        if (c.left < o.right - 20 && c.right > o.left + 20 && 
+            c.bottom > o.top + 20 && c.top < o.bottom - 20) {
+            gameOver("장애물과 충돌했습니다! 💥");
         }
-        if (right > window.innerWidth + 100) { obs.remove(); clearInterval(moveObs); }
+
+        if (pos > window.innerWidth + 100) {
+            obs.remove();
+            clearInterval(moveInterval);
+        }
     }, 20);
 
-    setTimeout(spawnObstacles, 1800 + Math.random() * 2000);
+    setTimeout(spawnObstacles, 1500 + Math.random() * 2000);
 }
 
 function gameOver(reason) {
     isPlaying = false;
-    document.getElementById('game-over').classList.remove('hidden');
+    const goModal = document.getElementById('game-over');
+    goModal.classList.remove('hidden');
     document.getElementById('death-reason').innerText = reason;
-    document.getElementById('final-score').innerText = Math.floor(score);
+    document.getElementById('final-score-val').innerText = Math.floor(score);
 }

@@ -1,43 +1,77 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Nanum+Square+Round:wght@400;800&display=swap');
 
-body { margin: 0; overflow: hidden; background: #000; font-family: 'Pretendard', sans-serif; color: white; }
-#game-container { width: 100vw; height: 100vh; background: linear-gradient(#4facfe, #00f2fe); position: relative; }
+:root {
+    --primary: #ffeb3b;
+    --danger: #ff5252;
+    --sky: #2193b0;
+    --ocean-blue: #0077be;
+}
 
-#ui { position: absolute; top: 20px; left: 20px; z-index: 100; }
-#score-box { font-size: 24px; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+body { margin: 0; overflow: hidden; background: #000; font-family: 'Nanum Square Round', sans-serif; }
 
-/* 볼륨 미터 디자인 */
-#pitch-meter { width: 150px; height: 12px; background: rgba(0,0,0,0.2); border-radius: 6px; overflow: hidden; border: 1px solid white; margin-top: 10px; position: relative; }
-#pitch-bar { width: 0%; height: 100%; background: #fff; transition: width 0.1s; }
-#pitch-text { position: absolute; width: 100%; text-align: center; font-size: 9px; line-height: 12px; color: #333; font-weight: bold; }
+#game-container { 
+    width: 100vw; height: 100vh; 
+    background: linear-gradient(to bottom, var(--sky), #6dd5ed); 
+    position: relative; 
+}
 
-/* 캐릭터 */
-#character { position: absolute; left: 100px; bottom: 50%; width: 80px; height: 80px; font-size: 60px; z-index: 100; display: flex; align-items: center; justify-content: center; }
-.run { animation: walk 0.4s infinite alternate; }
+/* UI 구성 */
+#ui { 
+    position: absolute; top: 0; width: 100%; padding: 20px; 
+    display: flex; justify-content: space-between; z-index: 1000;
+    box-sizing: border-box; pointer-events: none;
+}
+
+#score-container {
+    background: rgba(0,0,0,0.6); padding: 10px 25px; border-radius: 40px;
+    border: 3px solid var(--primary); color: white; text-align: center;
+}
+#distance-val { font-family: 'Black Han Sans'; font-size: 2.5rem; color: var(--primary); }
+
+#control-panel {
+    background: rgba(255,255,255,0.9); padding: 15px; border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2); min-width: 200px; pointer-events: auto;
+}
+.label { font-size: 12px; font-weight: 800; color: #333; margin-bottom: 5px; }
+.hint { font-size: 10px; color: #666; text-align: center; margin-top: 5px; }
+
+#vol-meter { width: 100%; height: 12px; background: #eee; border-radius: 6px; overflow: hidden; border: 1px solid #ccc; }
+#vol-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4caf50, #ffeb3b, #f44336); transition: width 0.05s; }
+
+/* 캐릭터 & 오브젝트 */
+#character { 
+    position: absolute; left: 100px; bottom: 50%; width: 80px; height: 80px; 
+    font-size: 60px; z-index: 500; display: flex; align-items: center; justify-content: center;
+}
+.walk-anim { animation: walk 0.4s infinite alternate; }
 @keyframes walk { from { transform: rotate(-10deg); } to { transform: rotate(10deg); } }
 
-/* 시작 흙길 */
 #start-bridge { 
-    position: absolute; left: 0; bottom: calc(50% - 10px); width: 400px; height: 20px; 
-    background: #8B4513; border-bottom: 5px solid #5D2E0A; z-index: 90;
-    transition: transform 1s ease-in;
+    position: absolute; left: 0; bottom: calc(50% - 10px); width: 450px; height: 25px; 
+    background: #8B4513; border-bottom: 8px solid #5D2E0A; z-index: 450;
+    border-radius: 0 10px 10px 0; transition: transform 1.2s cubic-bezier(0.6, -0.28, 0.735, 0.045);
 }
 
-/* 바다 배경 애니메이션 */
-.ocean { position: absolute; bottom: 0; width: 100%; height: 120px; background: #01579b; overflow: hidden; }
+/* 넘실거리는 바다 */
+.ocean { position: absolute; bottom: 0; width: 100%; height: 120px; background: var(--ocean-blue); z-index: 400; }
 .wave {
-    background: rgba(255, 255, 255, 0.2);
-    position: absolute; bottom: 0; width: 200%; height: 100%;
-    animation: wave 3s repeat-x infinite linear;
-    border-top: 3px solid rgba(255,255,255,0.5);
+    position: absolute; top: -30px; width: 200%; height: 60px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V46.29C41.89,35.16,114.33,45,178.6,56.44c66,11.77,133.09,10.74,142.79,0Z" fill="white" opacity="0.3"></path></svg>');
+    animation: waveMove 4s infinite linear;
 }
-.wave:nth-child(2) { bottom: 10px; opacity: 0.5; animation: wave 5s repeat-x infinite reverse linear; }
+.wave2 { top: -45px; opacity: 0.5; animation-duration: 6s; animation-direction: reverse; }
+.wave3 { top: -20px; opacity: 0.2; animation-duration: 3s; }
 
-@keyframes wave {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
-}
+@keyframes waveMove { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-#overlay, #game-over { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+/* 오버레이 */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; color: white; text-align: center; }
 .hidden { display: none !important; }
-button { padding: 15px 50px; font-size: 20px; background: #fff; border: none; border-radius: 50px; cursor: pointer; font-weight: bold; }
+h1 { font-family: 'Black Han Sans'; font-size: 4rem; color: var(--primary); margin: 0; text-shadow: 4px 4px 0px #e64a19; }
+h1.danger { color: var(--danger); text-shadow: 4px 4px 0px #880e4f; }
+button { 
+    margin-top: 30px; padding: 15px 60px; font-size: 1.8rem; font-family: 'Black Han Sans';
+    background: var(--primary); border: none; border-radius: 50px; cursor: pointer;
+    box-shadow: 0 8px #fbc02d; transition: 0.1s;
+}
+button:active { transform: translateY(4px); box-shadow: 0 2px #fbc02d; }
