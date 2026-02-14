@@ -1,19 +1,16 @@
 let audioCtx, analyser, dataArray;
-let chickenX = 50, chickenY = 0, velocityY = 0;
-let score = 0, hoverTimer = 0, feverCounter = 0;
-let isFever = false, isReverse = false;
+let isPlaying = false;
+let lives = 5;
+let distance = 0;
+let gameSpeed = 5;
+let charY = 0;
+let velocityY = 0;
+const GRAVITY = 0.6;
 
-const GRAVITY = 0.08, JUMP_POWER = 1.8, MOVE_SMOOTHING = 0.015;
-const chickenEl = document.getElementById('chicken');
-const scoreEl = document.getElementById('score-display');
-const growthBar = document.getElementById('growth-bar');
+const charEl = document.getElementById('character');
+const distEl = document.getElementById('dist');
+const livesEl = document.getElementById('lives');
 const statusMsg = document.getElementById('status-msg');
-const world = document.getElementById('game-container');
-
-window.onload = () => {
-    chickenEl.style.left = `calc(${chickenX}% - 50px)`;
-    chickenEl.style.bottom = "100px";
-};
 
 document.getElementById('start-btn').addEventListener('click', async () => {
     try {
@@ -24,138 +21,136 @@ document.getElementById('start-btn').addEventListener('click', async () => {
         analyser.fftSize = 2048;
         source.connect(analyser);
         dataArray = new Float32Array(analyser.frequencyBinCount);
-        document.getElementById('overlay').style.display = 'none';
+        
+        document.getElementById('overlay').classList.add('hidden');
+        isPlaying = true;
         gameLoop();
-        setInterval(spawnManager, 1500);
-        setInterval(toggleReverseZone, 12000);
+        spawnObstacle();
+        
+        // 20초마다 속도 증가
+        setInterval(() => {
+            if (!isPlaying) return;
+            gameSpeed += 1.5;
+            showSpeedMsg();
+        }, 20000);
+        
     } catch (err) {
-        alert("Microphone Access Required!");
+        alert("마이크 권한이 필요합니다!");
     }
 });
 
 function gameLoop() {
-    analyzeVoice();
-    updatePhysics();
-    checkCollisions();
+    if (!isPlaying) return;
+
+    analyzePitch();
+    applyPhysics();
+    moveObstacles();
+    updateUI();
+    
     requestAnimationFrame(gameLoop);
 }
 
-function analyzeVoice() {
-    if (!analyser) return;
+function analyzePitch() {
     analyser.getFloatTimeDomainData(dataArray);
-    
-    // 주파수 분석 (Pitch Detection)
     let pitchData = autoCorrelate(dataArray, audioCtx.sampleRate);
-    let freq = pitchData.freq;
-    let confidence = pitchData.confidence; // 0~1 사이의 신뢰도
-
-    // [중요 수정] 신뢰도가 낮으면(바람소리 등) 무시함
-    if (freq > 0 && confidence > 0.9) { 
-        let octave = Math.max(-3, Math.min(3, Math.log2(freq / 261.63)));
-        let direction = isReverse ? -1 : 1;
-        let targetX = 50 + (octave * 13.33 * direction);
-        
-        chickenX += (targetX - chickenX) * MOVE_SMOOTHING;
-        velocityY = JUMP_POWER;
-        hoverTimer = 35;
-
-        if (octave > 1.2) {
-            feverCounter++;
-            if (feverCounter > 100 && !isFever) startFever();
-        }
-        statusMsg.innerText = `NOTE DETECTED: ${Math.round(freq)}Hz`;
-    } else {
-        feverCounter = Math.max(0, feverCounter - 1);
-        if (hoverTimer > 0) { hoverTimer--; velocityY *= 0.97; } 
-        else { velocityY -= GRAVITY; }
-        if (confidence < 0.9 && freq > 0) statusMsg.innerText = "NOISY... USE CLEAR VOICE";
+    
+    // 신뢰도 0.9 이상일 때만 반응 (들숨/날숨 방지)
+    if (pitchData.freq > 0 && pitchData.confidence > 0.9) {
+        let pitch = pitchData.freq;
+        // 주파수가 높을수록 점프 힘이 강해짐 (200Hz ~ 800Hz 범위)
+        let jumpForce = Math.min(15, (pitch / 100) * 2);
+        if (charY <= 0) velocityY = jumpForce; 
+        statusMsg.innerText = `현재 음정: ${Math.round(pitch)}Hz`;
     }
 }
 
-function updatePhysics() {
-    chickenY += velocityY;
-    if (chickenY < 0) { chickenY = 0; velocityY = 0; }
-    chickenX = Math.max(10, Math.min(90, chickenX));
-    chickenEl.style.left = `calc(${chickenX}% - 50px)`;
-    chickenEl.style.bottom = (100 + chickenY) + "px";
+function applyPhysics() {
+    charY += velocityY;
+    if (charY > 0) {
+        velocityY -= GRAVITY;
+    } else {
+        charY = 0;
+        velocityY = 0;
+    }
+    charEl.style.bottom = (50 + charY) + "px";
+}
+
+function spawnObstacle() {
+    if (!isPlaying) return;
     
-    if (score < 30) chickenEl.innerText = "🐥";
-    else if (score < 100) { chickenEl.innerText = "🐔"; chickenEl.style.fontSize = "75px"; }
-    else { chickenEl.innerText = "🐉"; chickenEl.style.fontSize = "100px"; }
+    const ob = document.createElement('div');
+    ob.className = 'obstacle';
+    ob.innerHTML = '🌵';
+    ob.style.right = '-100px';
+    document.getElementById('world').appendChild(ob);
     
-    let progress = score < 30 ? (score/30)*50 : (score < 100 ? 50+((score-30)/70)*50 : 100);
-    growthBar.style.width = progress + "%";
+    // 다음 장애물 생성 시간 (랜덤)
+    let nextSpawn = Math.random() * 2000 + (2000 / (gameSpeed/5));
+    setTimeout(spawnObstacle, nextSpawn);
 }
 
-function spawnManager() {
-    if (isFever) { spawnItem('gold'); return; }
-    const rand = Math.random();
-    if (rand < 0.15) spawnItem('egg');
-    else if (rand < 0.22) spawnItem('box');
-    else if (rand < 0.45) spawnItem('gold');
-    else if (rand < 0.7) spawnItem('silver');
-    else spawnItem('bronze');
-}
+function moveObstacles() {
+    const obstacles = document.querySelectorAll('.obstacle');
+    obstacles.forEach(ob => {
+        let right = parseFloat(ob.style.right);
+        right += gameSpeed;
+        ob.style.right = right + 'px';
 
-function spawnItem(type) {
-    const item = document.createElement('div');
-    item.style.left = (Math.random() * 80 + 10) + '%';
-    item.style.top = '-60px';
-    if (type === 'egg') item.className = 'egg';
-    else if (type === 'box') { item.className = 'box'; item.innerText = '🎁'; }
-    else { item.className = `item ${type}`; item.innerText = type === 'gold' ? '5' : (type === 'silver' ? '3' : '1'); }
-    world.appendChild(item);
-    setTimeout(() => { if (item.parentNode) item.remove(); }, 9000);
-}
+        // 충돌 검사
+        const charRect = charEl.getBoundingClientRect();
+        const obRect = ob.getBoundingClientRect();
 
-function checkCollisions() {
-    const targets = document.querySelectorAll('.item, .egg, .box');
-    targets.forEach(t => {
-        const r1 = chickenEl.getBoundingClientRect();
-        const r2 = t.getBoundingClientRect();
-        if (!(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom)) {
-            if (t.classList.contains('egg')) score = Math.max(0, score - 30);
-            else if (t.classList.contains('box')) { score += 20; statusMsg.innerText = "LUCKY BOX! +20"; }
-            else {
-                if (t.classList.contains('gold')) score += 5;
-                else if (t.classList.contains('silver')) score += 3;
-                else score += 1;
-            }
-            t.remove();
-            scoreEl.innerText = score.toString().padStart(3, '0');
+        if (
+            charRect.left < obRect.right &&
+            charRect.right > obRect.left &&
+            charRect.bottom > obRect.top
+        ) {
+            hit();
+            ob.remove();
+        }
+
+        // 화면 밖으로 나가면 삭제
+        if (right > window.innerWidth + 100) {
+            ob.remove();
         }
     });
 }
 
-function startFever() {
-    isFever = true;
-    chickenEl.classList.add("fever-glow");
-    world.style.background = "radial-gradient(circle, #400, #000)";
-    setTimeout(() => {
-        isFever = false; feverCounter = 0;
-        chickenEl.classList.remove("fever-glow");
-        world.style.background = "radial-gradient(circle, #101820, #000)";
-    }, 5000);
-}
-
-function toggleReverseZone() {
-    if (Math.random() > 0.5 && !isFever) {
-        isReverse = true;
-        document.getElementById('reverse-zone').classList.add('zone-active');
-        setTimeout(() => {
-            isReverse = false;
-            document.getElementById('reverse-zone').classList.remove('zone-active');
-        }, 5000);
+function hit() {
+    lives--;
+    updateUI();
+    charEl.style.opacity = "0.5";
+    setTimeout(() => charEl.style.opacity = "1", 500);
+    
+    if (lives <= 0) {
+        gameOver();
     }
 }
 
-// [개선된] 주파수 및 신뢰도 분석 알고리즘
+function updateUI() {
+    distance += gameSpeed / 10;
+    distEl.innerText = Math.floor(distance);
+    livesEl.innerText = "❤️".repeat(lives);
+}
+
+function showSpeedMsg() {
+    const msg = document.getElementById('speed-msg');
+    msg.style.opacity = "1";
+    setTimeout(() => msg.style.opacity = "0", 1000);
+}
+
+function gameOver() {
+    isPlaying = false;
+    document.getElementById('game-over').classList.remove('hidden');
+    document.getElementById('final-dist').innerText = Math.floor(distance);
+}
+
+// 주파수 분석 알고리즘 (신뢰도 포함)
 function autoCorrelate(buffer, sampleRate) {
     let size = buffer.length;
     let rms = 0;
     for (let i = 0; i < size; i++) rms += buffer[i] * buffer[i];
     rms = Math.sqrt(rms / size);
-    
     if (rms < 0.01) return { freq: -1, confidence: 0 };
 
     let c = new Array(size).fill(0);
@@ -168,8 +163,6 @@ function autoCorrelate(buffer, sampleRate) {
     for (let i = d; i < size; i++) {
         if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
     }
-
-    // 신뢰도 계산: 피크 값의 선명도로 판단
-    let confidence = maxval / c[0]; 
+    let confidence = maxval / c[0];
     return { freq: sampleRate / maxpos, confidence: confidence };
 }
