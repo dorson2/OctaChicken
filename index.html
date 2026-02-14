@@ -3,50 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice Ocean Survival</title>
+    <title>Voice Ocean Survival: 3 Lives</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
         <div id="ui">
-            <div id="score-container">
-                <div class="label">DISTANCE</div>
-                <div id="distance-val">0</div>
+            <div id="status-left">
+                <div id="score-container">
+                    <div class="label">DISTANCE</div>
+                    <div id="distance-val">0</div>
+                </div>
+                <div id="lives-container">❤️ ❤️ ❤️</div>
             </div>
             
             <div id="control-panel">
-                <div class="label">마이크 감도 증폭: <span id="sens-display">1.5</span>x</div>
-                <input type="range" id="sens-slider" min="0.5" max="5.0" step="0.1" value="1.5">
+                <div class="label">입력 레벨 (감도 0.8 고정)</div>
                 <div id="vol-meter">
                     <div id="vol-bar"></div>
                 </div>
-                <div class="hint">인식이 안되면 바를 오른쪽으로!</div>
             </div>
         </div>
 
         <div id="world">
             <div id="start-bridge"></div>
             <div id="character" class="walk-anim">🐥</div>
-            
             <div class="ocean">
                 <div class="wave wave1"></div>
                 <div class="wave wave2"></div>
-                <div class="wave wave3"></div>
             </div>
         </div>
 
         <div id="overlay" class="modal">
             <h1>OCEAN SURVIVAL</h1>
-            <p>목소리(볼륨)를 내면 캐릭터가 떠오릅니다!</p>
-            <button id="start-btn">여정 시작</button>
-            <p class="small">2초 후 흙길이 사라집니다. 바다를 조심하세요!</p>
+            <p>목소리를 내어 비행하세요!</p>
+            <button id="start-btn">START</button>
+            <p class="small">2초 후 중력이 작동합니다. 바닥은 즉사!</p>
         </div>
 
         <div id="game-over" class="modal hidden">
             <h1 class="danger">GAME OVER</h1>
             <p id="death-reason">바다에 빠졌습니다!</p>
             <div class="final-score">최종 점수: <span id="final-score-val">0</span>m</div>
-            <button onclick="location.reload()">다시 도전</button>
+            <button onclick="location.reload()">RETRY</button>
         </div>
     </div>
     <script src="script.js"></script>
