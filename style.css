@@ -3,33 +3,43 @@
 body { margin: 0; overflow: hidden; background: #000; font-family: 'Pretendard', sans-serif; color: white; }
 #game-container { width: 100vw; height: 100vh; background: linear-gradient(#12c2e9, #c471ed, #f64f59); position: relative; }
 
-/* UI */
-.stats { position: absolute; top: 20px; left: 20px; z-index: 100; pointer-events: none; }
-#score-box { font-size: 28px; font-weight: 900; margin-bottom: 5px; }
-.hp-bar-bg { width: 200px; height: 15px; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden; display: inline-block; vertical-align: middle; }
-#hp-fill { width: 100%; height: 100%; background: #ff416c; transition: width 0.2s; }
+/* 상단 UI 레이아웃 */
+#ui { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 100; pointer-events: none; }
+.stats { display: flex; justify-content: space-between; align-items: center; }
+#score-box { font-size: 28px; font-weight: 900; }
 
-/* 옥타브 미터 */
-#pitch-meter { position: absolute; top: 20px; right: 20px; width: 150px; height: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; border: 1px solid white; }
+/* 쿠키런 스타일 체력바 */
+.hp-bar-bg { width: 180px; height: 18px; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden; display: inline-block; vertical-align: middle; }
+#hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff416c, #ff4b2b); transition: width 0.1s linear; }
+
+/* 목소리 게이지 */
+#pitch-meter { width: 150px; height: 12px; background: rgba(0,0,0,0.3); border-radius: 6px; overflow: hidden; border: 1px solid rgba(255,255,255,0.5); margin-top: 10px; position: relative; }
 #pitch-bar { width: 0%; height: 100%; background: #00f3ff; transition: width 0.1s; }
-#pitch-text { position: absolute; width: 100%; text-align: center; font-size: 10px; top: 0; line-height: 15px; }
+#pitch-text { position: absolute; width: 100%; text-align: center; font-size: 9px; top: 0; line-height: 12px; font-weight: bold; }
 
-/* 캐릭터 */
-#character { position: absolute; left: 80px; bottom: 80px; width: 80px; height: 80px; font-size: 60px; z-index: 100; transition: transform 0.1s; display: flex; align-items: center; justify-content: center; }
-.run { animation: cookierun 0.4s infinite; }
+/* 캐릭터 설정 */
+#character { 
+    position: absolute; left: 80px; bottom: 80px; width: 80px; height: 80px; 
+    font-size: 60px; z-index: 100; display: flex; align-items: center; justify-content: center;
+}
+
+/* 달리기 애니메이션 */
+.run { animation: cookierun 0.4s infinite linear; }
 @keyframes cookierun { 
     0% { transform: rotate(-5deg); } 
-    50% { transform: rotate(5deg) translateY(-5px); } 
+    50% { transform: rotate(5deg) translateY(-8px); } 
     100% { transform: rotate(-5deg); } 
 }
 
-/* 아이템 & 장애물 */
+/* 아이템 및 장애물 디자인 */
 .jelly { position: absolute; width: 40px; height: 40px; font-size: 30px; display: flex; align-items: center; justify-content: center; z-index: 50; }
-.obstacle { position: absolute; width: 40px; height: 60px; font-size: 40px; display: flex; align-items: center; justify-content: center; z-index: 50; filter: drop-shadow(0 0 5px red); }
+.obstacle { position: absolute; width: 40px; height: 70px; font-size: 45px; display: flex; align-items: center; justify-content: center; z-index: 50; filter: drop-shadow(0 0 5px red); }
 
-/* 오버레이 */
+/* 오버레이 공통 */
 #overlay, #game-over { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
 .hidden { display: none !important; }
-button { padding: 15px 50px; font-size: 22px; background: #fff700; border: none; border-radius: 50px; color: #000; cursor: pointer; font-weight: bold; }
+button { padding: 15px 50px; font-size: 22px; background: #fff700; border: none; border-radius: 50px; color: #000; cursor: pointer; font-weight: bold; transition: transform 0.1s; }
+button:active { transform: scale(0.95); }
 
-#world::after { content: ''; position: absolute; bottom: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.2); border-top: 3px solid rgba(255,255,255,0.5); }
+/* 바닥 레이어 */
+#world::after { content: ''; position: absolute; bottom: 0; width: 100%; height: 60px; background: rgba(0,0,0,0.2); border-top: 3px solid rgba(255,255,255,0.3); }
