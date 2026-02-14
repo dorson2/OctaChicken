@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice Saga: Walking Evolution</title>
+    <title>Voice Saga: Ultra Slow Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,8 +13,12 @@
                 <div id="score-box">DISTANCE: <span id="dist">0</span>m</div>
                 <div id="life-box">LIVES: <span id="lives">❤️❤️❤️❤️❤️</span></div>
             </div>
-            <div id="status-msg">목소리를 내면 점프합니다! (고음 = 높게)</div>
-            <div id="speed-msg">SPEED UP!</div>
+            <div id="pitch-meter">
+                <div id="pitch-bar"></div>
+                <span id="pitch-text">PITCH: WAITING...</span>
+            </div>
+            <div id="status-msg">아주 작은 소리에도 반응합니다!</div>
+            <div id="speed-msg">LEVEL UP! SPEED UP!</div>
         </div>
 
         <div id="world">
@@ -22,10 +26,10 @@
         </div>
 
         <div id="overlay">
-            <h1>OCTAVE RUNNER</h1>
+            <h1>VOICE RUNNER</h1>
             <button id="start-btn">여정 시작</button>
-            <p>목소리가 들리면 캐릭터가 점프합니다!</p>
-            <p style="font-size:12px; opacity:0.6;">(너무 작게 들리면 점프하지 않아요)</p>
+            <p>목소리 톤을 높이면 더 높게 점프합니다!</p>
+            <p style="font-size:12px; color: #ffeb3b;">(마이크 허용 버튼을 꼭 눌러주세요)</p>
         </div>
 
         <div id="game-over" class="hidden">
