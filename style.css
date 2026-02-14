@@ -1,56 +1,26 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+:root { --main-blue: #00d2ff; --main-pink: #ff00ea; }
+body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+#game-container { width: 100vw; height: 100vh; background: linear-gradient(#12c2e9, #c471ed, #f64f59); position: relative; }
 
-body { margin: 0; background: #000; font-family: 'Pretendard', sans-serif; overflow: hidden; color: white; }
-#game-container { position: relative; width: 100vw; height: 100vh; background: linear-gradient(to bottom, #1a2a6c, #2a4858); overflow: hidden; }
+/* HP 바 - 쿠키런 스타일 */
+.hp-bar-bg { width: 200px; height: 20px; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; display: inline-block; vertical-align: middle; overflow: hidden; }
+#hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff416c, #ff4b2b); transition: width 0.2s; }
 
-/* UI */
-#ui { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 100; pointer-events: none; }
-.stats { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+.stats { position: absolute; top: 20px; left: 20px; color: white; font-size: 24px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
 
-/* 옥타브 미터 스타일 */
-#pitch-meter { 
-    margin: 15px auto; width: 200px; height: 20px; 
-    background: rgba(255,255,255,0.1); border-radius: 10px; position: relative; overflow: hidden; 
-    border: 1px solid rgba(255,255,255,0.3);
-}
-#pitch-bar { 
-    width: 0%; height: 100%; background: linear-gradient(90deg, #00f3ff, #ff00ff); 
-    transition: width 0.1s; 
-}
-#pitch-text { 
-    position: absolute; width: 100%; text-align: center; top: 0; 
-    font-size: 11px; line-height: 20px; font-weight: bold; color: white; 
+/* 캐릭터 달리기 애니메이션 */
+#character { position: absolute; left: 100px; bottom: 80px; width: 70px; height: 70px; font-size: 60px; z-index: 100; transition: transform 0.1s; }
+.run { animation: cookierun 0.4s infinite; }
+@keyframes cookierun { 
+    0% { transform: translateY(0) rotate(-5deg); } 
+    50% { transform: translateY(-10px) rotate(5deg); } 
+    100% { transform: translateY(0) rotate(-5deg); } 
 }
 
-#status-msg { text-align: center; color: #00f3ff; font-size: 13px; margin-top: 5px; }
-#speed-msg { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #ffeb3b; font-weight: 900; opacity: 0; transition: 0.5s; }
+/* 아이템 & 장애물 */
+.jelly { position: absolute; width: 30px; height: 30px; background: #fff700; border-radius: 50%; box-shadow: 0 0 10px #fff700; animation: rotate 1s infinite; }
+.obstacle { position: absolute; width: 40px; height: 70px; background: #444; border-top: 20px solid #ff4b2b; border-radius: 5px; }
 
-/* 캐릭터 */
-#character { 
-    position: absolute; left: 100px; bottom: 50px; width: 80px; height: 80px; 
-    font-size: 50px; display: flex; align-items: center; justify-content: center; 
-    z-index: 50; 
-}
-.walk { animation: walking 0.8s infinite ease-in-out; }
-@keyframes walking {
-    0% { transform: rotate(-8deg); }
-    50% { transform: rotate(8deg) translateY(-8px); }
-    100% { transform: rotate(-8deg); }
-}
-
-/* 뾰족한 가시 장애물 */
-.obstacle { 
-    position: absolute; right: -100px; bottom: 50px; width: 0; height: 0; 
-    border-left: 20px solid transparent; border-right: 20px solid transparent;
-    border-bottom: 55px solid #ff4757;
-    filter: drop-shadow(0 0 8px #ff4757);
-}
-
-.energy { position: absolute; right: -100px; width: 40px; height: 40px; font-size: 30px; animation: float 1s infinite alternate; }
-@keyframes float { from { transform: translateY(0); } to { transform: translateY(-20px); } }
-
-#overlay, #game-over { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-.hidden { display: none !important; }
-button { padding: 15px 50px; font-size: 20px; cursor: pointer; border-radius: 50px; border: none; background: #00f3ff; font-weight: bold; margin-top: 20px; }
-
-#world::after { content: ''; position: absolute; bottom: 0; width: 100%; height: 50px; background: #111; border-top: 2px solid #555; }
+@keyframes rotate { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+#overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; color: white; }
+button { padding: 15px 40px; font-size: 24px; background: var(--main-blue); border: none; border-radius: 50px; color: white; cursor: pointer; font-weight: bold; }

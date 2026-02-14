@@ -3,39 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice Saga: Ultra Slow Edition</title>
+    <title>Dragon Run: Voice Saga</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
         <div id="ui">
             <div class="stats">
-                <div id="score-box">DISTANCE: <span id="dist">0</span>m</div>
-                <div id="life-box">LIVES: <span id="lives">❤️❤️❤️❤️❤️</span></div>
+                <div id="score-box">JELLY: <span id="jelly-count">0</span></div>
+                <div id="life-box">HP: <div class="hp-bar-bg"><div id="hp-fill"></div></div></div>
             </div>
-            <div id="pitch-meter">
-                <div id="pitch-bar"></div>
-                <span id="pitch-text">PITCH: WAITING...</span>
-            </div>
-            <div id="status-msg">아주 작은 소리에도 반응합니다!</div>
-            <div id="speed-msg">LEVEL UP! SPEED UP!</div>
+            <div id="pitch-display">PITCH GAUGE</div>
         </div>
-
         <div id="world">
-            <div id="character" class="walk">🐥</div>
+            <div id="character" class="run">🐥</div>
         </div>
-
         <div id="overlay">
-            <h1>VOICE RUNNER</h1>
-            <button id="start-btn">여정 시작</button>
-            <p>목소리 톤을 높이면 더 높게 점프합니다!</p>
-            <p style="font-size:12px; color: #ffeb3b;">(마이크 허용 버튼을 꼭 눌러주세요)</p>
-        </div>
-
-        <div id="game-over" class="hidden">
-            <h1>여정 종료</h1>
-            <p>최종 거리: <span id="final-dist">0</span>m</p>
-            <button onclick="location.reload()">다시 도전</button>
+            <h1>DRAGON RUN</h1>
+            <button id="start-btn">GAME START</button>
+            <p>목소리가 높으면 올라가고, 낮으면 내려갑니다!</p>
         </div>
     </div>
     <script src="script.js"></script>
