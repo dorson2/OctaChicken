@@ -1,170 +1,146 @@
 let audioCtx, analyser, dataArray;
 let isPlaying = false;
 let score = 0;
-let gameSpeed = 2.0; 
-let charY = 150;       // 시작할 때 공중에서 시작하도록 설정
-let velocityY = 0;     
+let gameSpeed = 2.5;
+let charY = window.innerHeight / 2 - 100; // 화면 중앙 시작
+let velocityY = 0;
+let isBridgeSafe = true; // 유예 기간 상태
 
-// --- [볼륨 모드 최적화 튜닝 수치] ---
-const GRAVITY = 0.15;        // 중력 (천천히 하강)
-const ASCENT_SPEED = 0.4;     // 소리 낼 때 올라가는 힘
-const MAX_VELOCITY = 5.0;     // 최대 속도 제한
-const VOLUME_THRESHOLD = 0.01; // 소리 인식 최소 크기 (작게 내도 인식됨)
-// ----------------------------------
+// --- [물리 및 볼륨 설정] ---
+const GRAVITY = 0.18;
+const ASCENT_SPEED = 0.45;
+const MAX_VELOCITY = 5.5;
+const VOLUME_THRESHOLD = 0.015;
+// --------------------------
 
 const charEl = document.getElementById('character');
-const jellyScoreEl = document.getElementById('jelly-count');
+const bridgeEl = document.getElementById('start-bridge');
 const pitchBar = document.getElementById('pitch-bar');
-const pitchText = document.getElementById('pitch-text');
 
 document.getElementById('start-btn').addEventListener('click', async () => {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        await audioCtx.resume();
 
         const source = audioCtx.createMediaStreamSource(stream);
         analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 512; // 볼륨 분석은 작은 사이즈로도 충분
-        source.connect(analyser);
+        analyser.fftSize = 512;
         dataArray = new Float32Array(analyser.frequencyBinCount);
 
         document.getElementById('overlay').classList.add('hidden');
         isPlaying = true;
-        charY = 200; // 시작 시 약간 공중에서 시작
-        
-        gameLoop();
-        spawnController();
-        
-        setInterval(() => {
-            if (isPlaying) gameSpeed += 0.2;
-        }, 15000);
 
+        // [2초 로직] 2초 후에 흙길이 왼쪽으로 빠르게 사라집니다.
+        setTimeout(() => {
+            isBridgeSafe = false;
+            if(bridgeEl) bridgeEl.style.transform = "translateX(-120%)";
+        }, 2000);
+
+        gameLoop();
+        spawnObstacles();
     } catch (err) {
-        alert("마이크 접근이 필요합니다. 권한 설정을 확인해주세요.");
+        alert("마이크 접근 권한이 필요합니다!");
     }
 });
 
 function gameLoop() {
     if (!isPlaying) return;
-    applyVolumePhysics();
-    moveEntities();
-    updateUI();
-    requestAnimationFrame(gameLoop);
-}
-
-function applyVolumePhysics() {
-    analyser.getFloatTimeDomainData(dataArray);
     
-    // 1. 볼륨(RMS) 계산
+    // 볼륨 분석
+    analyser.getFloatTimeDomainData(dataArray);
     let rms = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-        rms += dataArray[i] * dataArray[i];
-    }
+    for (let i = 0; i < dataArray.length; i++) rms += dataArray[i] * dataArray[i];
     rms = Math.sqrt(rms / dataArray.length);
 
-    // 볼륨 게이지 업데이트 (시각화)
-    let volumePercent = Math.min(100, rms * 500); 
-    pitchBar.style.width = volumePercent + "%";
-    pitchText.innerText = "VOLUME METER";
+    // 볼륨 UI 업데이트
+    pitchBar.style.width = Math.min(100, rms * 600) + "%";
 
-    // 2. 볼륨이 일정 수준 이상이면 상승
+    // 물리 법칙 적용
     if (rms > VOLUME_THRESHOLD) {
-        velocityY += ASCENT_SPEED; 
-        charEl.classList.remove('run');
+        velocityY += ASCENT_SPEED;
+        charEl.classList.remove('run'); // 공중에서는 걷기 멈춤
     } else {
-        // 소리가 없으면 하강
         velocityY -= GRAVITY;
     }
 
     // 속도 제한
     if (velocityY > MAX_VELOCITY) velocityY = MAX_VELOCITY;
-    if (velocityY < -MAX_VELOCITY) velocityY = -MAX_VELOCITY;
-
     charY += velocityY;
 
-    // 3. [핵심] 바닥 사망 판정
-    if (charY <= 0) {
-        charY = 0;
-        gameOver("바닥에 추락했습니다!");
+    // 바닥/바다 판정 로직
+    const seaLevel = 80; // 바다 수면 높이
+    if (charY <= seaLevel) {
+        if (isBridgeSafe) {
+            // 2초 전에는 흙길이 캐릭터를 지탱
+            charY = seaLevel;
+            velocityY = 0;
+            charEl.classList.add('run');
+        } else {
+            // 2초 후에는 바다에 풍덩! 게임 오버
+            charY = seaLevel; // 수면에 고정
+            gameOver("바다에 빠졌습니다! 🌊");
+        }
     }
 
-    // 4. 천장 제한
-    const maxHeight = window.innerHeight - 180; 
+    // 천장 제한
+    const maxHeight = window.innerHeight - 150;
     if (charY >= maxHeight) {
         charY = maxHeight;
-        if (velocityY > 0) velocityY = 0; 
+        velocityY = 0;
     }
 
-    charEl.style.bottom = (60 + charY) + 'px';
+    charEl.style.bottom = charY + "px";
+    
+    // 점수(거리) 증가
+    score += 0.15;
+    document.getElementById('jelly-count').innerText = Math.floor(score);
+
+    requestAnimationFrame(gameLoop);
 }
 
-function spawnController() {
+// 장애물 생성 (독수리 등)
+function spawnObstacles() {
     if (!isPlaying) return;
     
-    const type = Math.random() > 0.4 ? 'jelly' : 'obstacle';
-    const entity = document.createElement('div');
-    entity.className = type;
-    entity.style.right = '-60px';
+    const obs = document.createElement('div');
+    obs.className = 'obstacle-unit'; // CSS 제어를 위해 클래스 추가 가능
+    obs.style.position = "absolute";
+    obs.style.right = "-60px";
+    obs.style.bottom = (150 + Math.random() * (window.innerHeight - 350)) + "px";
+    obs.style.fontSize = "50px";
+    obs.style.zIndex = "95";
+    obs.innerText = "🦅"; 
+    document.getElementById('game-container').appendChild(obs);
 
-    if (type === 'jelly') {
-        entity.innerText = '🍬';
-        // 젤리를 공중에 다양하게 배치
-        entity.style.bottom = (100 + Math.random() * (window.innerHeight - 300)) + 'px';
-    } else {
-        entity.innerText = '🌵';
-        entity.style.bottom = (80 + Math.random() * (window.innerHeight - 250)) + 'px'; // 장애물도 공중에 나타남
-    }
-
-    document.getElementById('game-container').appendChild(entity);
-    let nextSpawn = 2000 / (gameSpeed / 2);
-    setTimeout(spawnController, nextSpawn + Math.random() * 1000);
-}
-
-function moveEntities() {
-    const entities = document.querySelectorAll('.jelly, .obstacle');
-    entities.forEach(en => {
-        let right = parseFloat(en.style.right || -60);
+    const moveObs = setInterval(() => {
+        if (!isPlaying) { clearInterval(moveObs); return; }
+        let right = parseFloat(obs.style.right);
         right += gameSpeed;
-        en.style.right = right + 'px';
+        obs.style.right = right + "px";
 
-        const charRect = charEl.getBoundingClientRect();
-        const enRect = en.getBoundingClientRect();
-
-        if (charRect.left < enRect.right - 15 && 
-            charRect.right > enRect.left + 15 &&
-            charRect.bottom > enRect.top + 15 && 
-            charRect.top < enRect.bottom - 15) {
-            
-            if (en.classList.contains('jelly')) {
-                score += 10;
-                en.remove();
-            } else {
-                // 장애물 충돌 시에도 즉사하거나 큰 감점 (여기서는 즉사로 설정 가능)
-                gameOver("장애물에 충돌했습니다!");
-            }
+        // 충돌 감지
+        const cRect = charEl.getBoundingClientRect();
+        const oRect = obs.getBoundingClientRect();
+        if (cRect.left < oRect.right - 15 && cRect.right > oRect.left + 15 &&
+            cRect.bottom > oRect.top + 15 && cRect.top < oRect.bottom - 15) {
+            gameOver("독수리와 충돌했습니다! 💥");
         }
-        if (right > window.innerWidth + 100) en.remove();
-    });
-}
 
-function updateUI() {
-    jellyScoreEl.innerText = score;
-    // 체력 바는 이제 필요 없으므로 숨기거나 고정 (HP 바 제거는 HTML/CSS에서 가능)
-    const hpBar = document.getElementById('hp-fill');
-    if(hpBar) hpBar.style.width = "100%";
+        if (right > window.innerWidth + 100) {
+            obs.remove();
+            clearInterval(moveObs);
+        }
+    }, 20);
 
-    if (score >= 100 && score < 300) charEl.innerText = "🐔";
-    else if (score >= 300) {
-        charEl.innerText = "🐉";
-        charEl.style.fontSize = "100px";
-    }
+    // 생성 간격도 약간 줄여 더 다이나믹하게 조정
+    setTimeout(spawnObstacles, 1500 + Math.random() * 2000);
 }
 
 function gameOver(reason) {
     isPlaying = false;
-    const gameOverScreen = document.getElementById('game-over');
-    gameOverScreen.classList.remove('hidden');
-    gameOverScreen.querySelector('h1').innerText = reason;
-    document.getElementById('final-score').innerText = score;
+    const goScreen = document.getElementById('game-over');
+    goScreen.classList.remove('hidden');
+    document.getElementById('death-reason').innerText = reason;
+    document.getElementById('final-score').innerText = Math.floor(score);
 }
