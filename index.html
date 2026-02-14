@@ -13,15 +13,27 @@
                 <div id="score-box">JELLY: <span id="jelly-count">0</span></div>
                 <div id="life-box">HP: <div class="hp-bar-bg"><div id="hp-fill"></div></div></div>
             </div>
-            <div id="pitch-display">PITCH GAUGE</div>
+            <div id="pitch-meter">
+                <div id="pitch-bar"></div>
+                <span id="pitch-text">목소리를 내주세요!</span>
+            </div>
         </div>
+
         <div id="world">
             <div id="character" class="run">🐥</div>
         </div>
+
         <div id="overlay">
             <h1>DRAGON RUN</h1>
-            <button id="start-btn">GAME START</button>
-            <p>목소리가 높으면 올라가고, 낮으면 내려갑니다!</p>
+            <button id="start-btn">게임 시작</button>
+            <p>높은 소리를 내면 위로 올라갑니다!</p>
+            <p style="font-size:12px; color: #ffeb3b;">(마이크 권한 허용이 필수입니다)</p>
+        </div>
+
+        <div id="game-over" class="hidden">
+            <h1>GAME OVER</h1>
+            <p>획득 젤리: <span id="final-score">0</span></p>
+            <button onclick="location.reload()">다시 도전</button>
         </div>
     </div>
     <script src="script.js"></script>
