@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Saga: Dragon's Breath</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui">
+            <div class="header">
+                <div id="score-wrapper">
+                    <span class="label">TOTAL SCORE</span>
+                    <div id="score-display">000</div>
+                </div>
+                <div id="growth-wrapper">
+                    <span class="label">EVOLUTION</span>
+                    <div class="progress-container"><div id="growth-bar"></div></div>
+                </div>
+            </div>
+            <div id="status-msg">READY TO EVOLVE</div>
+        </div>
+
+        <div id="reverse-zone">REVERSE ZONE: PITCH INVERTED!</div>
+
+        <div id="world">
+            <div id="chicken">🐥</div>
+        </div>
+
+        <div id="overlay">
+            <button id="start-btn">AWAKEN THE DRAGON</button>
+            <p style="margin-top:20px;">Use your <b>PITCH</b> to move | <b>LOW</b> is Left, <b>HIGH</b> is Right</p>
+            <p style="font-size:12px; opacity:0.6;">(Requires Microphone & Localhost/HTTPS)</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
