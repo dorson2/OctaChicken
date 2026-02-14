@@ -1,165 +1,24 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-
-:root {
-    --gold: #ffd700;
-    --silver: #c0c0c0;
-    --bronze: #cd7f32;
-    --neon-blue: #00f3ff;
-    --danger: #ff4757;
-}
-
-body {
-    margin: 0;
-    background: #000;
-    font-family: 'Pretendard', sans-serif;
-    overflow: hidden;
-    color: white;
-}
-
-#game-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    background: radial-gradient(circle at center, #101820, #000);
-    transition: background 0.5s;
-}
-
-/* UI 구성 */
-#ui {
-    position: absolute;
-    top: 30px;
-    left: 5%;
-    width: 90%;
-    z-index: 100;
-    pointer-events: none;
-}
-
-.header {
-    display: flex;
-    justify-content: space-between;
-}
-
-.label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    opacity: 0.5;
-}
-
-#score-display {
-    font-size: 42px;
-    font-weight: 900;
-    color: var(--gold);
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-}
-
-.progress-container {
-    width: 140px;
-    height: 10px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 5px;
-    overflow: hidden;
-    margin-top: 5px;
-}
-
-#growth-bar {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, #ff00ff, var(--neon-blue));
-    transition: width 0.3s;
-}
-
-#status-msg {
-    margin-top: 10px;
-    font-size: 16px;
-    color: var(--neon-blue);
-    letter-spacing: 2px;
-}
-
-/* 캐릭터 (병아리/드래곤) */
-#chicken {
-    position: absolute;
-    width: 100px;
-    height: 100px;
-    font-size: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 99;
-    transition: font-size 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
-}
-
-/* 아이템 공통 */
-.item, .egg, .box {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fall 8s linear forwards;
-    font-weight: bold;
-}
-
+:root { --gold: #ffd700; --silver: #c0c0c0; --bronze: #cd7f32; --neon-blue: #00f3ff; --danger: #ff4757; }
+body { margin: 0; background: #000; font-family: 'Pretendard', sans-serif; overflow: hidden; color: white; }
+#game-container { position: relative; width: 100vw; height: 100vh; background: radial-gradient(circle at center, #101820, #000); }
+#ui { position: absolute; top: 30px; left: 5%; width: 90%; z-index: 100; pointer-events: none; }
+.header { display: flex; justify-content: space-between; }
+#score-display { font-size: 42px; font-weight: 900; color: var(--gold); }
+.progress-container { width: 140px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+#growth-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #ff00ff, var(--neon-blue)); transition: width 0.3s; }
+#status-msg { margin-top: 10px; font-size: 16px; color: var(--neon-blue); letter-spacing: 2px; height: 20px; }
+#chicken { position: absolute; width: 100px; height: 100px; font-size: 60px; display: flex; align-items: center; justify-content: center; z-index: 99; transition: font-size 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.item, .egg, .box { position: absolute; display: flex; align-items: center; justify-content: center; animation: fall 8s linear forwards; font-weight: bold; }
 .gold { background: radial-gradient(circle, #fff700, #ffcc00); border: 2px solid #daa520; box-shadow: 0 0 15px #ffd700; color: #b8860b; width: 35px; height: 35px; border-radius: 50%; }
 .silver { background: radial-gradient(circle, #f0f0f0, #c0c0c0); border: 2px solid #a9a9a9; width: 30px; height: 30px; border-radius: 50%; color: #666; }
 .bronze { background: radial-gradient(circle, #cd7f32, #8b4513); border: 2px solid #5d2e0a; width: 25px; height: 25px; border-radius: 50%; color: #fff; }
 .egg { width: 25px; height: 32px; background: #eee; border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%; animation: fall 6s linear forwards; }
 .box { width: 50px; height: 40px; background: #4a3c2c; border: 3px solid var(--gold); border-radius: 5px; animation: fall 10s linear forwards; font-size: 20px; }
-
-/* 특수 효과 */
-#reverse-zone {
-    position: absolute;
-    top: 40%;
-    width: 100%;
-    height: 100px;
-    background: rgba(255, 71, 87, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    color: var(--danger);
-    border-top: 2px dashed var(--danger);
-    border-bottom: 2px dashed var(--danger);
-    opacity: 0;
-    transition: opacity 0.5s;
-    pointer-events: none;
-}
-
+#reverse-zone { position: absolute; top: 40%; width: 100%; height: 100px; background: rgba(255, 71, 87, 0.2); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--danger); border-top: 2px dashed var(--danger); border-bottom: 2px dashed var(--danger); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
 .zone-active { opacity: 1 !important; }
-
 @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+.fever-glow { filter: drop-shadow(0 0 25px #fff) !important; animation: shake 0.1s infinite; }
 @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -2px); } 100% { transform: translate(1px, 2px); } }
-
-.fever-glow {
-    filter: drop-shadow(0 0 25px #fff) !important;
-    animation: shake 0.1s infinite;
-}
-
-/* 오버레이 */
-#overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    text-align: center;
-}
-
-#start-btn {
-    padding: 20px 60px;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 50px;
-    border: none;
-    background: #fff;
-    color: #000;
-    transition: 0.3s;
-}
-
-#start-btn:hover {
-    transform: scale(1.1);
-    background: var(--gold);
-}
+#overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; text-align: center; }
+#start-btn { padding: 20px 60px; font-size: 20px; font-weight: bold; cursor: pointer; border-radius: 50px; border: none; background: #fff; color: #000; }
