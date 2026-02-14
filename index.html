@@ -3,36 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Voice Saga: Dragon Run</title>
+    <title>Voice Saga: Ocean Run</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
         <div id="ui">
             <div class="stats">
-                <div id="score-box">JELLY: <span id="jelly-count">0</span></div>
-                <div id="life-box">HP: <div class="hp-bar-bg"><div id="hp-fill"></div></div></div>
+                <div id="score-box">DISTANCE: <span id="jelly-count">0</span>m</div>
             </div>
             <div id="pitch-meter">
                 <div id="pitch-bar"></div>
-                <span id="pitch-text">PITCH METER</span>
+                <span id="pitch-text">VOLUME METER</span>
             </div>
         </div>
 
         <div id="world">
+            <div id="start-bridge"></div>
             <div id="character" class="run">🐥</div>
+            <div class="ocean">
+                <div class="wave"></div>
+                <div class="wave"></div>
+            </div>
         </div>
 
         <div id="overlay">
-            <h1>DRAGON RUN</h1>
-            <button id="start-btn">게임 시작</button>
-            <p>목소리를 내면 캐릭터가 솟구칩니다!</p>
-            <p style="font-size:12px; color: #ffeb3b; margin-top:10px;">(공중에서 연속 점프가 가능합니다)</p>
+            <h1>OCEAN SURVIVAL</h1>
+            <button id="start-btn">여정 시작</button>
+            <p>"아~" 소리를 내서 바다 위로 떠오르세요!</p>
+            <p style="font-size:12px; color: #ffeb3b; margin-top:5px;">3초 후 흙길이 사라지면 바닥은 즉사입니다.</p>
         </div>
 
         <div id="game-over" class="hidden">
             <h1>GAME OVER</h1>
-            <p>획득 점수: <span id="final-score">0</span></p>
+            <p id="death-reason">바다에 빠졌습니다!</p>
+            <p>최종 거리: <span id="final-score">0</span>m</p>
             <button onclick="location.reload()">다시 도전</button>
         </div>
     </div>
