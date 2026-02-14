@@ -6,8 +6,7 @@ let charY = window.innerHeight / 2;
 let velocityY = 0;
 let lives = 3;
 
-// GLOBAL GAME CONFIG
-const SENSITIVITY = 0.8;      // Fixed sensitivity
+const SENSITIVITY = 0.8;      
 const GRAVITY = 0.17;         
 const ASCENT_SPEED = 0.42;    
 const MAX_VELOCITY = 5.0;
@@ -27,11 +26,8 @@ async function startSequence() {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioCtx.createMediaStreamSource(stream);
-        
-        // Signal Boosting Node
         gainNode = audioCtx.createGain();
         gainNode.gain.value = 2.5; 
-        
         analyser = audioCtx.createAnalyser();
         analyser.fftSize = 256;
         source.connect(gainNode);
@@ -41,12 +37,11 @@ async function startSequence() {
         document.getElementById('overlay').classList.add('hidden');
         countdownOverlay.classList.remove('hidden');
 
-        // COUNTDOWN: 3 -> 2 -> 1 -> GO!
         const steps = ['3', '2', '1', 'GO!'];
         for (let step of steps) {
             countdownNumber.innerText = step;
             countdownNumber.classList.remove('pop-effect');
-            void countdownNumber.offsetWidth; // Trigger reflow
+            void countdownNumber.offsetWidth; 
             countdownNumber.classList.add('pop-effect');
             await new Promise(r => setTimeout(r, 1000));
         }
@@ -54,18 +49,16 @@ async function startSequence() {
         countdownOverlay.classList.add('hidden');
         isPlaying = true;
         isGravityActive = true;
-
         gameLoop();
         spawnEnemies();
     } catch (err) {
-        alert("Microphone access is required to play!");
+        alert("Microphone access is required!");
     }
 }
 
 function gameLoop() {
     if (!isPlaying) return;
 
-    // VOLUME ANALYSIS
     analyser.getByteTimeDomainData(dataArray);
     let sum = 0;
     for (let i = 0; i < dataArray.length; i++) {
@@ -86,27 +79,33 @@ function gameLoop() {
         if (velocityY > MAX_VELOCITY) velocityY = MAX_VELOCITY;
         charY += velocityY;
 
-        // INSTANT DEATH: Ocean
-        if (charY <= 90) gameOver("Drowned in the ocean! 🌊");
-    }
+        // [즉사 판정 1] 바다에 빠짐 (90px 이하)
+        if (charY <= 90) {
+            gameOver("Drowned in the ocean! 🌊");
+            return;
+        }
 
-    // CEILING LIMIT
-    if (charY >= window.innerHeight - 120) {
-        charY = window.innerHeight - 120;
-        velocityY = 0;
+        // [즉사 판정 2] 상단 가시 덤불에 닿음
+        // 가시 높이가 60px이므로 상단에서 60px 이내로 들어가면 사망
+        const ceilingDeathPoint = window.innerHeight - 120; 
+        if (charY >= ceilingDeathPoint) {
+            charY = ceilingDeathPoint;
+            gameOver("Punctured by spikes! 🌵");
+            return;
+        }
     }
 
     charEl.style.bottom = charY + "px";
     score += 0.2;
     scoreVal.innerText = Math.floor(score);
-
     requestAnimationFrame(gameLoop);
 }
 
+// 장애물 생성 (부딪히면 하트 1개 감소)
 function spawnEnemies() {
     if (!isPlaying) return;
     const enemy = document.createElement('div');
-    enemy.style.cssText = `position:absolute; right:-100px; bottom:${150 + Math.random() * (window.innerHeight - 350)}px; font-size:50px; z-index:600;`;
+    enemy.style.cssText = `position:absolute; right:-100px; bottom:${150 + Math.random() * (window.innerHeight - 380)}px; font-size:50px; z-index:600;`;
     enemy.innerText = Math.random() > 0.5 ? "🦅" : "🛸";
     document.getElementById('game-container').appendChild(enemy);
 
@@ -119,7 +118,6 @@ function spawnEnemies() {
         const c = charEl.getBoundingClientRect();
         const e = enemy.getBoundingClientRect();
         
-        // DAMAGE COLLISION
         if (c.left < e.right - 25 && c.right > e.left + 25 && c.bottom > e.top + 25 && c.top < e.bottom - 25) {
             handleDamage();
             enemy.remove();
@@ -137,7 +135,6 @@ function handleDamage() {
     livesContainer.innerText = hearts;
     charEl.classList.add('hit-flash');
     setTimeout(() => charEl.classList.remove('hit-flash'), 400);
-    
     if (lives <= 0) gameOver("Out of health! 💥");
 }
 
